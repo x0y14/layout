@@ -1,0 +1,24 @@
+{
+  "name": "@layout/transform",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "lint": "pnpm run -w lint",
+    "fmt": "pnpm run -w fmt",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@layout/document": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.1"
+  },
+  "packageManager": "pnpm@10.30.3"
+}
