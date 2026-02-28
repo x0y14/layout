@@ -406,3 +406,73 @@ test("条件の値の要素数が 2 でない", () => {
     /logic tag "if".*condition.*"equal".*2 arguments.*got 3/, // 要素数エラー
   )
 })
+
+test("include で第二引数が配列", () => {
+  const result = parse('|if include=("a", ["a", "b", "c"])|<Foo />|/if|')
+  const expected: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "if",
+        decorations: [],
+        attributes: { include: { type: "group", values: ["a", ["a", "b", "c"]] } },
+        children: [
+          {
+            type: "element",
+            name: "Foo",
+            decorations: [],
+            attributes: {},
+            children: [],
+            selfClosing: true,
+          },
+        ],
+        selfClosing: false,
+      },
+    ],
+  }
+  assert.deepStrictEqual(result, expected)
+})
+
+test("notinclude で第二引数が配列", () => {
+  const result = parse('|if notinclude=("x", ["a", "b"])|<Foo />|/if|')
+  const expected: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "if",
+        decorations: [],
+        attributes: { notinclude: { type: "group", values: ["x", ["a", "b"]] } },
+        children: [
+          {
+            type: "element",
+            name: "Foo",
+            decorations: [],
+            attributes: {},
+            children: [],
+            selfClosing: true,
+          },
+        ],
+        selfClosing: false,
+      },
+    ],
+  }
+  assert.deepStrictEqual(result, expected)
+})
+
+test("include で第二引数が文字列", () => {
+  assert.throws(
+    () => parse('|if include=("a", "b")|<Foo />|/if|'),
+    Error,
+    /logic tag "if".*condition.*"include".*array.*second argument.*string/,
+  )
+})
+
+test("notinclude で第二引数が文字列", () => {
+  assert.throws(
+    () => parse('|if notinclude=("a", "b")|<Foo />|/if|'),
+    Error,
+    /logic tag "if".*condition.*"notinclude".*array.*second argument.*string/,
+  )
+})

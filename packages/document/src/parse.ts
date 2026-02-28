@@ -12,6 +12,12 @@ export const CONDITION_FUNCTIONS = new Set([
 /** Number of arguments required by condition functions */
 export const CONDITION_ARITY = 2
 
+/** Condition functions that require an array as the second argument */
+export const CONDITION_FUNCTIONS_REQUIRING_ARRAY = new Set([
+  "include",
+  "notinclude",
+] as const)
+
 /**
  * Logic tag definition.
  * Describes the closure form and condition requirement for each logic tag.
@@ -160,6 +166,16 @@ function validateLogicTagConstraints(node: ElementNode, parentName: string | nul
         throw new Error(
           `logic tag "${node.name}" condition "${conditionName}" requires ${CONDITION_ARITY} arguments, but got ${groupValue.values.length}`,
         )
+      }
+
+      // 第二引数が配列であることを要求する条件関数のバリデーション
+      if (CONDITION_FUNCTIONS_REQUIRING_ARRAY.has(conditionName as any)) {
+        const secondArgument = groupValue.values[1]
+        if (!Array.isArray(secondArgument)) {
+          throw new Error(
+            `logic tag "${node.name}" condition "${conditionName}" requires an array as the second argument, but got ${typeof secondArgument}`,
+          )
+        }
       }
     } else {
       // condition: "none" のタグ: 属性があればエラー
