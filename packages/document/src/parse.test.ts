@@ -105,7 +105,7 @@ test("ネストしたコンポーネント", () => {
 })
 
 test("ロジックタグ if (open-close)", () => {
-  const result = parse("|if|<Foo />|/if|")
+  const result = parse('|if equal=("a", "b")|<Foo />|/if|')
   const expected: DocumentNode = {
     type: "document",
     children: [
@@ -113,7 +113,7 @@ test("ロジックタグ if (open-close)", () => {
         type: "element",
         name: "if",
         decorations: [],
-        attributes: {},
+        attributes: { equal: { type: "group", values: ["a", "b"] } },
         children: [
           {
             type: "element",
@@ -131,8 +131,8 @@ test("ロジックタグ if (open-close)", () => {
   assert.deepStrictEqual(result, expected)
 })
 
-test("ロジックタグ elseif (self-closing)", () => {
-  const result = parse("|if|<A />|elseif /||/if|")
+test("ロジックタグ elif (self-closing)", () => {
+  const result = parse('|if equal=("a", "b")|<A />|elif equal=("x", "y") /||/if|')
   const expected: DocumentNode = {
     type: "document",
     children: [
@@ -140,7 +140,7 @@ test("ロジックタグ elseif (self-closing)", () => {
         type: "element",
         name: "if",
         decorations: [],
-        attributes: {},
+        attributes: { equal: { type: "group", values: ["a", "b"] } },
         children: [
           {
             type: "element",
@@ -152,9 +152,9 @@ test("ロジックタグ elseif (self-closing)", () => {
           },
           {
             type: "element",
-            name: "elseif",
+            name: "elif",
             decorations: [],
-            attributes: {},
+            attributes: { equal: { type: "group", values: ["x", "y"] } },
             children: [],
             selfClosing: true,
           },
@@ -167,7 +167,7 @@ test("ロジックタグ elseif (self-closing)", () => {
 })
 
 test("ロジックタグ else (self-closing)", () => {
-  const result = parse("|if|<A />|else /||/if|")
+  const result = parse('|if equal=("a", "b")|<A />|else /||/if|')
   const expected: DocumentNode = {
     type: "document",
     children: [
@@ -175,7 +175,7 @@ test("ロジックタグ else (self-closing)", () => {
         type: "element",
         name: "if",
         decorations: [],
-        attributes: {},
+        attributes: { equal: { type: "group", values: ["a", "b"] } },
         children: [
           {
             type: "element",
@@ -202,7 +202,7 @@ test("ロジックタグ else (self-closing)", () => {
 })
 
 test("コンポーネント+ロジック混在", () => {
-  const result = parse("<Layout>|if|<Dark />|/if||else /|<Light /></Layout>")
+  const result = parse('<Layout>|if equal=("a","b")|<Dark />|else /||/if|<Light /></Layout>')
   const expected: DocumentNode = {
     type: "document",
     children: [
@@ -216,7 +216,7 @@ test("コンポーネント+ロジック混在", () => {
             type: "element",
             name: "if",
             decorations: [],
-            attributes: {},
+            attributes: { equal: { type: "group", values: ["a", "b"] } },
             children: [
               {
                 type: "element",
@@ -226,16 +226,16 @@ test("コンポーネント+ロジック混在", () => {
                 children: [],
                 selfClosing: true,
               },
+              {
+                type: "element",
+                name: "else",
+                decorations: [],
+                attributes: {},
+                children: [],
+                selfClosing: true,
+              },
             ],
             selfClosing: false,
-          },
-          {
-            type: "element",
-            name: "else",
-            decorations: [],
-            attributes: {},
-            children: [],
-            selfClosing: true,
           },
           {
             type: "element",
@@ -305,33 +305,25 @@ test("未知のタグ名をロジックデリミタで使用", () => {
 
 test("ロジックタグにデコレーション", () => {
   assert.throws(
-    () => parse("|if.active|<Foo />|/if|"),
+    () => parse('|if.active equal=("a","b")|<Foo />|/if|'),
     Error,
     /logic tag "if".*decoration/, // タグ名とデコレーション違反を含む
   )
 })
 
-test("ロジックタグに属性", () => {
-  assert.throws(
-    () => parse("|if cond=true|<Foo />|/if|"),
-    Error,
-    /logic tag "if".*attribute/, // タグ名と属性違反を含む
-  )
-})
-
 test("if を self-closing で使用", () => {
   assert.throws(
-    () => parse("|if /|"),
+    () => parse('|if equal=("a","b") /|'),
     Error,
     /logic tag "if".*open-close.*self-closing/, // 期待形式と実際の形式を含む
   )
 })
 
-test("elseif を open-close で使用", () => {
+test("elif を open-close で使用", () => {
   assert.throws(
-    () => parse("|elseif||/elseif|"),
+    () => parse('|elif equal=("a","b")||/elif|'),
     Error,
-    /logic tag "elseif".*self-closing.*open-close/, // 期待形式と実際の形式を含む
+    /logic tag "elif".*self-closing.*open-close/, // 期待形式と実際の形式を含む
   )
 })
 
@@ -345,8 +337,72 @@ test("else を open-close で使用", () => {
 
 test("深いネストでのロジックタグ制約違反", () => {
   assert.throws(
-    () => parse("<Layout><Container>|if.broken|<Foo />|/if|</Container></Layout>"),
+    () => parse('<Layout><Container>|if.broken equal=("a","b")|<Foo />|/if|</Container></Layout>'),
     Error,
     /logic tag "if".*decoration/, // 深いネストでもデコレーション違反を検出
+  )
+})
+
+test("elif が if の外にある", () => {
+  assert.throws(
+    () => parse('<Layout>|elif equal=("a","b") /|</Layout>'),
+    Error,
+    /logic tag "elif".*parent.*"if"/, // elif の親が if でないエラー
+  )
+})
+
+test("else が if の外にある", () => {
+  assert.throws(
+    () => parse("<Layout>|else /|</Layout>"),
+    Error,
+    /logic tag "else".*parent.*"if"/, // else の親が if でないエラー
+  )
+})
+
+test("if に条件なし", () => {
+  assert.throws(
+    () => parse("|if|<Foo />|/if|"),
+    Error,
+    /logic tag "if".*condition.*expected 1.*got 0/, // 条件が 0 個エラー
+  )
+})
+
+test("if に複数条件", () => {
+  assert.throws(
+    () => parse('|if equal=("a","b") notequal=("c","d")|<Foo />|/if|'),
+    Error,
+    /logic tag "if".*condition.*expected 1.*got 2/, // 条件が 2 個エラー
+  )
+})
+
+test("if に不正な条件名", () => {
+  assert.throws(
+    () => parse('|if unknown=("a","b")|<Foo />|/if|'),
+    Error,
+    /logic tag "if".*condition.*"unknown"/, // 不正な条件名エラー
+  )
+})
+
+test("elif に条件なし", () => {
+  assert.throws(
+    () => parse('|if equal=("a","b")|<Foo />|elif /||/if|'),
+    Error,
+    /logic tag "elif".*condition.*expected 1.*got 0/, // 条件が 0 個エラー
+  )
+})
+
+test("条件の値がグループでない", () => {
+  assert.throws(
+    () => parse('|if equal="a"|<Foo />|/if|'),
+    Error,
+    /logic tag "if".*condition.*"equal".*group/, // グループ形式でないエラー
+  )
+})
+
+test("条件の値の要素数が 2 でない", () => {
+  assert.throws(
+    () => parse('|if equal=("a","b","c")|<Foo />|/if|'),
+    Error,
+    /logic tag "if".*condition.*"equal".*2 arguments.*got 3/, // 要素数エラー
   )
 })

@@ -1,14 +1,35 @@
 import { onlytag } from "onlytag"
-import type { Token, DocumentNode, ElementNode } from "onlytag"
+import type { Token, DocumentNode, ElementNode, GroupValue } from "onlytag"
 
-const LOGIC_TAG_NAMES = new Set(["if", "elseif", "else"])
+/** Condition function names allowed on if/elif logic tags */
+export const CONDITION_FUNCTIONS = new Set([
+  "equal",
+  "notequal",
+  "include",
+  "notinclude",
+] as const)
 
-// ロジックタグの closure 制約: if は open-close のみ、elseif/else は self-closing のみ
-const LOGIC_TAG_CLOSURE: Record<string, "open-close" | "self-closing"> = {
-  if: "open-close",
-  elseif: "self-closing",
-  else: "self-closing",
+/** Number of arguments required by condition functions */
+export const CONDITION_ARITY = 2
+
+/**
+ * Logic tag definition.
+ * Describes the closure form and condition requirement for each logic tag.
+ */
+interface LogicTagDefinition {
+  closure: "open-close" | "self-closing"
+  condition: "required" | "none"
 }
+
+/** Logic tag definitions indexed by tag name */
+export const LOGIC_TAGS: Record<string, LogicTagDefinition> = {
+  if: { closure: "open-close", condition: "required" },
+  elif: { closure: "self-closing", condition: "required" },
+  else: { closure: "self-closing", condition: "none" },
+}
+
+/** Set of valid logic tag names */
+export const LOGIC_TAG_NAMES = new Set(Object.keys(LOGIC_TAGS))
 
 const COMPONENT_PAIR_INDEX = 0
 const LOGIC_PAIR_INDEX = 1
@@ -28,7 +49,7 @@ const parser = new onlytag({
 
 /**
  * Validate that tag names use the correct delimiter pair.
- * Logic tags (if, elseif, else) must use "||", and
+ * Logic tags (if, elif, else) must use "||", and
  * component tags must use "<>".
  * @param tokens - Token array from onlytag tokenize
  * @throws {Error} If a tag name uses the wrong delimiter pair
@@ -69,36 +90,89 @@ function validateTokenDelimiters(tokens: Token[]): void {
 
 /**
  * Recursively validate logic tag constraints on the AST.
- * Logic tags must not have decorations or attributes,
- * and must use the correct closure form.
+ * Logic tags must not have decorations, must use the correct closure form,
+ * must satisfy condition requirements, and elif/else must be direct children of if.
  * @param node - Element node to validate
+ * @param parentName - Name of the parent element, or null if at document root
  * @throws {Error} If a logic tag violates constraints
  */
-function validateLogicTagConstraints(node: ElementNode): void {
+function validateLogicTagConstraints(node: ElementNode, parentName: string | null): void {
   if (LOGIC_TAG_NAMES.has(node.name)) {
+    const definition = LOGIC_TAGS[node.name]
+
+    // デコレーション禁止
     if (node.decorations.length > 0) {
       throw new Error(
         `logic tag "${node.name}" must not have decorations, but found: ${node.decorations.join(", ")}`,
       )
     }
 
-    if (Object.keys(node.attributes).length > 0) {
+    // closure 制約
+    const actualClosure = node.selfClosing ? "self-closing" : "open-close"
+    if (actualClosure !== definition.closure) {
       throw new Error(
-        `logic tag "${node.name}" must not have attributes, but found: ${Object.keys(node.attributes).join(", ")}`,
+        `logic tag "${node.name}" must use ${definition.closure} form, but found ${actualClosure}`,
       )
     }
 
-    const expectedClosure = LOGIC_TAG_CLOSURE[node.name]
-    const actualClosure = node.selfClosing ? "self-closing" : "open-close"
-    if (actualClosure !== expectedClosure) {
-      throw new Error(
-        `logic tag "${node.name}" must use ${expectedClosure} form, but found ${actualClosure}`,
-      )
+    // 親ノード制約: elif/else は if の直接の子でなければならない
+    if (node.name === "elif" || node.name === "else") {
+      if (parentName !== "if") {
+        throw new Error(
+          `logic tag "${node.name}" must be a direct child of parent "if", but found parent "${parentName ?? "document"}"`,
+        )
+      }
+    }
+
+    // 条件属性バリデーション
+    const attributeKeys = Object.keys(node.attributes)
+    if (definition.condition === "required") {
+      // 条件が必ず 1 つ必要
+      if (attributeKeys.length !== 1) {
+        throw new Error(
+          `logic tag "${node.name}" requires exactly one condition, expected 1 but got ${attributeKeys.length}`,
+        )
+      }
+
+      const conditionName = attributeKeys[0]
+
+      // 条件名が有効か
+      if (!CONDITION_FUNCTIONS.has(conditionName as any)) {
+        throw new Error(
+          `logic tag "${node.name}" has invalid condition name "${conditionName}", expected one of: ${[...CONDITION_FUNCTIONS].join(", ")}`,
+        )
+      }
+
+      const conditionValue = node.attributes[conditionName]
+
+      // 値がグループ形式か
+      if (typeof conditionValue !== "object" || conditionValue === null || !("type" in conditionValue) || conditionValue.type !== "group") {
+        throw new Error(
+          `logic tag "${node.name}" condition "${conditionName}" must be a group value, but found a non-group value`,
+        )
+      }
+
+      // ガードで形状を検証済みなので GroupValue として扱う
+      const groupValue = conditionValue as GroupValue
+
+      // グループの要素数が CONDITION_ARITY と一致するか
+      if (groupValue.values.length !== CONDITION_ARITY) {
+        throw new Error(
+          `logic tag "${node.name}" condition "${conditionName}" requires ${CONDITION_ARITY} arguments, but got ${groupValue.values.length}`,
+        )
+      }
+    } else {
+      // condition: "none" のタグ: 属性があればエラー
+      if (attributeKeys.length > 0) {
+        throw new Error(
+          `logic tag "${node.name}" must not have attributes, but found: ${attributeKeys.join(", ")}`,
+        )
+      }
     }
   }
 
   for (const child of node.children) {
-    validateLogicTagConstraints(child)
+    validateLogicTagConstraints(child, node.name)
   }
 }
 
@@ -120,7 +194,7 @@ export function parse(input: string): DocumentNode {
 
   // AST 段階でロジックタグの制約を検証
   for (const child of document.children) {
-    validateLogicTagConstraints(child)
+    validateLogicTagConstraints(child, null)
   }
 
   return document

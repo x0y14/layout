@@ -1,4 +1,10 @@
-export { parse } from "./parse.js"
+export {
+  parse,
+  CONDITION_FUNCTIONS,
+  CONDITION_ARITY,
+  LOGIC_TAGS,
+  LOGIC_TAG_NAMES,
+} from "./parse.js"
 
 export type {
   DocumentNode,
