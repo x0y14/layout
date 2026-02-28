@@ -1,0 +1,21 @@
+{
+  "name": "@layout/root",
+  "private": true,
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "lint": "oxlint .",
+    "fmt": "oxfmt .",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Yuhei Yamauchi",
+  "license": "MIT",
+  "packageManager": "pnpm@10.30.3",
+  "devDependencies": {
+    "oxfmt": "^0.35.0",
+    "oxlint": "^1.50.0",
+    "typescript": "^5.9.3"
+  }
+}
