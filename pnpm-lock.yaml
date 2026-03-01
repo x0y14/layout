@@ -46,6 +46,40 @@ importers:
         specifier: ^4.17.0
         version: 4.69.0
 
+  examples/sns:
+    dependencies:
+      '@layout/document':
+        specifier: workspace:*
+        version: link:../../packages/document
+      '@layout/transform':
+        specifier: workspace:*
+        version: link:../../packages/transform
+      hono:
+        specifier: ^4.12.3
+        version: 4.12.3
+      lit:
+        specifier: ^3.3.2
+        version: 3.3.2
+      playful-avatars:
+        specifier: ^1.0.0
+        version: 1.0.0
+    devDependencies:
+      '@cloudflare/vite-plugin':
+        specifier: ^1.2.3
+        version: 1.25.6(vite@6.4.1(@types/node@20.19.35)(tsx@4.21.0))(workerd@1.20260305.0)(wrangler@4.69.0)
+      vite:
+        specifier: ^6.3.5
+        version: 6.4.1(@types/node@20.19.35)(tsx@4.21.0)
+      vite-ssr-components:
+        specifier: ^0.5.2
+        version: 0.5.2
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.4(@types/node@20.19.35)(tsx@4.21.0)
+      wrangler:
+        specifier: ^4.17.0
+        version: 4.69.0
+
   packages/document:
     dependencies:
       onlytag:
@@ -1268,6 +1302,9 @@ packages:
     resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
     engines: {node: '>=12'}
 
+  playful-avatars@1.0.0:
+    resolution: {integrity: sha512-kQK76frsyuX5y7agZKteMwsIFKSxtNg1AnIy8WspO5tAl32hPPSysDHS0WB5xWrvyx58jkhsQ2Jo9GE03W6YtA==}
+
   playwright-core@1.58.2:
     resolution: {integrity: sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==}
     engines: {node: '>=18'}
@@ -2340,6 +2377,8 @@ snapshots:
   picocolors@1.1.1: {}
 
   picomatch@4.0.3: {}
+
+  playful-avatars@1.0.0: {}
 
   playwright-core@1.58.2: {}
 

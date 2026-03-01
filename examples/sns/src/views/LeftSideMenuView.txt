@@ -1,19 +1,11 @@
-% VStack .align-center %
-    < AppLogo />
-
-    < Menu kind="home" />
-
-    < Menu kind="explore" />
-
-    < Menu kind="notifications" />
-
-    < Menu kind="messages" />
-
-    < Menu kind="bookmarks" />
-
-    < Menu kind="list" />
-
-    < Menu kind="profile" />
-
-    < Menu kind="more" />
-%/ VStack %
+%VStack.align-center%
+<AppLogo />
+<Menu kind="home" />
+<Menu kind="explore" />
+<Menu kind="notifications" />
+<Menu kind="messages" />
+<Menu kind="bookmarks" />
+<Menu kind="list" />
+<Menu kind="profile" />
+<Menu kind="more" />
+%/VStack%

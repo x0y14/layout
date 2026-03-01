@@ -1,0 +1,4 @@
+%VStack.align-center%
+<AppLogo />
+<LoginForm />
+%/VStack%
