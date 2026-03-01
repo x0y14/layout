@@ -7,6 +7,7 @@ declare module 'hono/jsx' {
       'time-line': Hono.HTMLAttributes
       'x-trend': Hono.HTMLAttributes
       'login-form': Hono.HTMLAttributes
+      'content-area': Hono.HTMLAttributes
     }
   }
 }

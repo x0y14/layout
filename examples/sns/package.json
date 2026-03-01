@@ -15,10 +15,12 @@
     "@layout/transform": "workspace:*",
     "hono": "^4.12.3",
     "lit": "^3.3.2",
+    "nanostores": "^0.11.3",
     "playful-avatars": "^1.0.0"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.2.3",
+    "jsdom": "^26.1.0",
     "vite": "^6.3.5",
     "vite-ssr-components": "^0.5.2",
     "vitest": "^3.2.1",

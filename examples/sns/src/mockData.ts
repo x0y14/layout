@@ -24,6 +24,30 @@ export interface MockTrend {
   postCount: number
 }
 
+/**
+ * @interface CurrentUser
+ * Represents the currently logged-in user.
+ */
+export interface CurrentUser {
+  userName: string
+  displayName: string
+}
+
+/**
+ * @interface PageState
+ * Represents the serializable state embedded in the page for client-side hydration.
+ */
+export interface PageState {
+  posts: MockPost[]
+  trends: MockTrend[]
+  currentUser: CurrentUser
+}
+
+export const mockCurrentUser: CurrentUser = {
+  userName: 'current_user',
+  displayName: 'カレントユーザー',
+}
+
 export const mockPosts: MockPost[] = [
   {
     id: 1,

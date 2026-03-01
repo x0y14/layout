@@ -1,7 +1,7 @@
 import {LitElement, html, css} from 'lit';
 import {customElement} from 'lit/decorators.js';
-import {mockTrends} from '../mockData.js';
 import type {MockTrend} from '../mockData.js';
+import {StoreController, $trends} from '../stores.js';
 
 /**
  * @element x-trend
@@ -9,6 +9,8 @@ import type {MockTrend} from '../mockData.js';
  */
 @customElement('x-trend')
 export class Trend extends LitElement {
+  private trendsController = new StoreController(this, $trends);
+
   static styles = css`
     :host {
       display: block;
@@ -98,7 +100,7 @@ export class Trend extends LitElement {
       </div>
       <div class="trends-card">
         <div class="trends-header">Trends for you</div>
-        ${mockTrends.map((trend) => this.renderTrend(trend))}
+        ${this.trendsController.value.map((trend) => this.renderTrend(trend))}
       </div>
     `;
   }

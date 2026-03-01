@@ -1,5 +1,6 @@
 import {LitElement, html, css} from 'lit';
 import {customElement} from 'lit/decorators.js';
+import {StoreController, $currentUser} from '../stores.js';
 
 /**
  * @element posting-area
@@ -7,6 +8,8 @@ import {customElement} from 'lit/decorators.js';
  */
 @customElement('posting-area')
 export class PostingArea extends LitElement {
+  private currentUserController = new StoreController(this, $currentUser);
+
   static styles = css`
     :host {
       display: block;
@@ -66,7 +69,7 @@ export class PostingArea extends LitElement {
     return html`
       <div class="compose">
         <div class="avatar">
-          <playful-avatar name="CurrentUser" size="40"></playful-avatar>
+          <playful-avatar name=${this.currentUserController.value?.userName ?? ''} size="40"></playful-avatar>
         </div>
         <div class="compose-body">
           <textarea placeholder="What is happening?!"></textarea>

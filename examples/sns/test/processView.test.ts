@@ -21,8 +21,7 @@ test('ContentView 相当の入力が正しくレンダリングされる', () =>
 %Popup /%
 %/VStack%
 %VStack.align-center%
-<PostingArea />
-<TimeLine />
+<ContentArea />
 %/VStack%
 %/ZStack%
 `
@@ -30,8 +29,7 @@ test('ContentView 相当の入力が正しくレンダリングされる', () =>
   assert(html.includes('<div class="ZStack">'))
   assert(html.includes('<div class="VStack align-center">'))
   assert(html.includes('<div class="Popup"></div>'))
-  assert(html.includes('<posting-area></posting-area>'))
-  assert(html.includes('<time-line></time-line>'))
+  assert(html.includes('<content-area></content-area>'))
 })
 
 test('LoginView 相当の入力が正しくレンダリングされる', () => {

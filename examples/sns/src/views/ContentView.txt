@@ -3,7 +3,6 @@
 %Popup /%
 %/VStack%
 %VStack.align-center%
-<PostingArea />
-<TimeLine />
+<ContentArea />
 %/VStack%
 %/ZStack%

@@ -7,6 +7,7 @@ const COMPONENT_NAME_MAP: Record<string, string> = {
   TimeLine: 'time-line',
   Trend: 'x-trend',
   LoginForm: 'login-form',
+  ContentArea: 'content-area',
 }
 
 /**

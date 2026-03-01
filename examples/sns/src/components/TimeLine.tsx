@@ -1,7 +1,7 @@
 import {LitElement, html, css} from 'lit';
 import {customElement} from 'lit/decorators.js';
-import {mockPosts} from '../mockData.js';
 import type {MockPost} from '../mockData.js';
+import {StoreController, $posts} from '../stores.js';
 
 /**
  * @element time-line
@@ -9,6 +9,8 @@ import type {MockPost} from '../mockData.js';
  */
 @customElement('time-line')
 export class TimeLine extends LitElement {
+  private postsController = new StoreController(this, $posts);
+
   static styles = css`
     :host {
       display: block;
@@ -138,6 +140,6 @@ export class TimeLine extends LitElement {
   }
 
   protected render() {
-    return html`${mockPosts.map((post) => this.renderPost(post))}`;
+    return html`${this.postsController.value.map((post) => this.renderPost(post))}`;
   }
 }

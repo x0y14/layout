@@ -1,5 +1,7 @@
 import {LitElement, html, css} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
+import {StoreController, $activeMenu} from '../stores.js';
+import type {MenuKind} from '../stores.js';
 
 const MENU_LABELS: Record<string, string> = {
   home: 'Home',
@@ -26,6 +28,7 @@ const MENU_ICONS: Record<string, string> = {
 @customElement('x-menu')
 export class Menu extends LitElement {
   @property() kind = '';
+  private activeMenuController = new StoreController(this, $activeMenu);
 
   static styles = css`
     :host {
@@ -53,19 +56,24 @@ export class Menu extends LitElement {
     .menu-label {
       font-size: 20px;
     }
-    :host([kind="home"]) .menu-label {
+    .menu-label.active {
       font-weight: 700;
     }
   `;
 
+  private handleClick() {
+    $activeMenu.set(this.kind as MenuKind);
+  }
+
   protected render() {
     const label = MENU_LABELS[this.kind] ?? this.kind;
     const iconPath = MENU_ICONS[this.kind] ?? '';
+    const isActive = this.activeMenuController.value === this.kind;
 
     return html`
-      <div class="menu-item">
+      <div class="menu-item" @click=${this.handleClick}>
         <svg viewBox="0 0 24 24"><path d=${iconPath} /></svg>
-        <span class="menu-label">${label}</span>
+        <span class="menu-label ${isActive ? 'active' : ''}">${label}</span>
       </div>
     `;
   }
