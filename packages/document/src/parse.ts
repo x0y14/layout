@@ -39,6 +39,7 @@ export const LOGIC_TAG_NAMES = new Set(Object.keys(LOGIC_TAGS))
 
 const COMPONENT_PAIR_INDEX = 0
 const LOGIC_PAIR_INDEX = 1
+const LAYOUT_PAIR_INDEX = 2
 
 const parser = new onlytag({
   allowAttributes: true,
@@ -50,17 +51,29 @@ const parser = new onlytag({
   tags: [
     { opening: "<", closing: ">" },
     { opening: "|", closing: "|" },
+    { opening: "%", closing: "%" },
   ],
 })
 
+/** Map from pairIndex to delimiter string for error messages */
+const DELIMITER_LABELS: Record<number, string> = {
+  [COMPONENT_PAIR_INDEX]: "<>",
+  [LOGIC_PAIR_INDEX]: "||",
+  [LAYOUT_PAIR_INDEX]: "%%",
+}
+
 /**
  * Validate that tag names use the correct delimiter pair.
- * Logic tags (if, elif, else) must use "||", and
- * component tags must use "<>".
+ * Logic tags (if, elif, else) must use "||",
+ * component tags must use "<>", and layout tags must use "%%".
+ * Returns the set of tag names used with layout delimiters.
  * @param tokens - Token array from onlytag tokenize
+ * @returns Set of tag names used with "%%" delimiters
  * @throws {Error} If a tag name uses the wrong delimiter pair
  */
-function validateTokenDelimiters(tokens: Token[]): void {
+function validateTokenDelimiters(tokens: Token[]): Set<string> {
+  const layoutTagNames = new Set<string>()
+
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]
 
@@ -77,21 +90,29 @@ function validateTokenDelimiters(tokens: Token[]): void {
 
     const tagName = nextToken.value
     const isLogicTag = LOGIC_TAG_NAMES.has(tagName)
+    const delimiterLabel = DELIMITER_LABELS[pairIndex] ?? `unknown(${pairIndex})`
 
-    if (isLogicTag && pairIndex === COMPONENT_PAIR_INDEX) {
-      // ロジックタグ名をコンポーネントデリミタ(<>)で使用している
+    // ロジックタグ名は || でのみ使用可能
+    if (isLogicTag && pairIndex !== LOGIC_PAIR_INDEX) {
       throw new Error(
-        `logic tag "${tagName}" must use "||" delimiters, but found "<>" at position ${token.position}`,
+        `logic tag "${tagName}" must use "||" delimiters, but found "${delimiterLabel}" at position ${token.position}`,
       )
     }
 
+    // || はロジックタグ名でのみ使用可能
     if (!isLogicTag && pairIndex === LOGIC_PAIR_INDEX) {
-      // 未知のタグ名をロジックデリミタ(||)で使用している
       throw new Error(
         `tag "${tagName}" is not a valid logic tag for "||" delimiters, expected one of: ${[...LOGIC_TAG_NAMES].join(", ")}`,
       )
     }
+
+    // レイアウトタグ名を収集
+    if (!isLogicTag && pairIndex === LAYOUT_PAIR_INDEX) {
+      layoutTagNames.add(tagName)
+    }
   }
+
+  return layoutTagNames
 }
 
 /**
@@ -193,24 +214,51 @@ function validateLogicTagConstraints(node: ElementNode, parentName: string | nul
 }
 
 /**
+ * Recursively validate that layout tags do not have attributes.
+ * @param node - Element node to validate
+ * @param layoutTagNames - Set of tag names used with "%%" delimiters
+ * @throws {Error} If a layout tag has attributes
+ */
+function validateLayoutTagConstraints(node: ElementNode, layoutTagNames: Set<string>): void {
+  if (layoutTagNames.has(node.name)) {
+    if (Object.keys(node.attributes).length > 0) {
+      throw new Error(
+        `layout tag "${node.name}" must not have attributes, but found: ${Object.keys(node.attributes).join(", ")}`,
+      )
+    }
+  }
+
+  for (const child of node.children) {
+    validateLayoutTagConstraints(child, layoutTagNames)
+  }
+}
+
+/**
  * Parse a document string into a DocumentNode AST with validation.
  * Uses onlytag for parsing with fixed configuration, then applies
- * domain-specific validation rules for logic tags vs component tags.
+ * domain-specific validation rules for logic tags, layout tags, and component tags.
  * @param input - The document markup string to parse
  * @returns The parsed and validated DocumentNode AST
- * @throws {Error} If the input violates delimiter or logic tag constraints
+ * @throws {Error} If the input violates delimiter, logic tag, or layout tag constraints
  */
 export function parse(input: string): DocumentNode {
   const tokens = parser.tokenize(input)
 
   // トークン段階でデリミタとタグ名の対応を検証
-  validateTokenDelimiters(tokens)
+  const layoutTagNames = validateTokenDelimiters(tokens)
 
   const document = parser.parse(tokens)
 
   // AST 段階でロジックタグの制約を検証
   for (const child of document.children) {
     validateLogicTagConstraints(child, null)
+  }
+
+  // AST 段階でレイアウトタグの制約を検証
+  if (layoutTagNames.size > 0) {
+    for (const child of document.children) {
+      validateLayoutTagConstraints(child, layoutTagNames)
+    }
   }
 
   return document

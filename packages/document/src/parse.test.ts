@@ -253,6 +253,175 @@ test("コンポーネント+ロジック混在", () => {
   assert.deepStrictEqual(result, expected)
 })
 
+test("レイアウトタグ (self-closing)", () => {
+  const result = parse("%Button /%")
+  const expected: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "Button",
+        decorations: [],
+        attributes: {},
+        children: [],
+        selfClosing: true,
+      },
+    ],
+  }
+  assert.deepStrictEqual(result, expected)
+})
+
+test("レイアウトタグ (open-close)", () => {
+  const result = parse("%Container%%/Container%")
+  const expected: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "Container",
+        decorations: [],
+        attributes: {},
+        children: [],
+        selfClosing: false,
+      },
+    ],
+  }
+  assert.deepStrictEqual(result, expected)
+})
+
+test("デコレーション付きレイアウトタグ", () => {
+  const result = parse("%VStack.align-center%%/VStack%")
+  const expected: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "VStack",
+        decorations: ["align-center"],
+        attributes: {},
+        children: [],
+        selfClosing: false,
+      },
+    ],
+  }
+  assert.deepStrictEqual(result, expected)
+})
+
+test("子要素を持つレイアウトタグ", () => {
+  const result = parse("%VStack%<Button />%/VStack%")
+  const expected: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "VStack",
+        decorations: [],
+        attributes: {},
+        children: [
+          {
+            type: "element",
+            name: "Button",
+            decorations: [],
+            attributes: {},
+            children: [],
+            selfClosing: true,
+          },
+        ],
+        selfClosing: false,
+      },
+    ],
+  }
+  assert.deepStrictEqual(result, expected)
+})
+
+test("ネストしたレイアウトタグ", () => {
+  const result = parse("%ZStack%%VStack%<Foo />%/VStack%%/ZStack%")
+  const expected: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "ZStack",
+        decorations: [],
+        attributes: {},
+        children: [
+          {
+            type: "element",
+            name: "VStack",
+            decorations: [],
+            attributes: {},
+            children: [
+              {
+                type: "element",
+                name: "Foo",
+                decorations: [],
+                attributes: {},
+                children: [],
+                selfClosing: true,
+              },
+            ],
+            selfClosing: false,
+          },
+        ],
+        selfClosing: false,
+      },
+    ],
+  }
+  assert.deepStrictEqual(result, expected)
+})
+
+test("コンポーネント+レイアウト+ロジック混在", () => {
+  const result = parse('%VStack%<Header />|if equal=("a","b")|<Dark />|else /||/if|%/VStack%')
+  const expected: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "VStack",
+        decorations: [],
+        attributes: {},
+        children: [
+          {
+            type: "element",
+            name: "Header",
+            decorations: [],
+            attributes: {},
+            children: [],
+            selfClosing: true,
+          },
+          {
+            type: "element",
+            name: "if",
+            decorations: [],
+            attributes: { equal: { type: "group", values: ["a", "b"] } },
+            children: [
+              {
+                type: "element",
+                name: "Dark",
+                decorations: [],
+                attributes: {},
+                children: [],
+                selfClosing: true,
+              },
+              {
+                type: "element",
+                name: "else",
+                decorations: [],
+                attributes: {},
+                children: [],
+                selfClosing: true,
+              },
+            ],
+            selfClosing: false,
+          },
+        ],
+        selfClosing: false,
+      },
+    ],
+  }
+  assert.deepStrictEqual(result, expected)
+})
+
 test("空文字列", () => {
   const result = parse("")
   const expected: DocumentNode = {
@@ -286,6 +455,30 @@ test("placeholder/group 付きコンポーネント", () => {
 // ========================================
 // エラー系
 // ========================================
+
+test("レイアウトタグに属性", () => {
+  assert.throws(
+    () => parse('%VStack padding="10" /%'),
+    Error,
+    /layout tag "VStack".*must not have attributes/,
+  )
+})
+
+test("ロジックタグ名をレイアウトデリミタで使用", () => {
+  assert.throws(
+    () => parse("%if /%"),
+    Error,
+    /logic tag "if".*"\|\|".*"%%"/,
+  )
+})
+
+test("ネストしたレイアウトタグの属性違反", () => {
+  assert.throws(
+    () => parse('%ZStack%%VStack padding="10" /%%/ZStack%'),
+    Error,
+    /layout tag "VStack".*must not have attributes/,
+  )
+})
 
 test("ロジックタグ名をコンポーネントデリミタで使用", () => {
   assert.throws(
