@@ -83,6 +83,10 @@ function validateTokenDelimiters(tokens: Token[]): Set<string> {
     }
 
     const pairIndex = token.pairIndex
+    if (pairIndex === undefined) {
+      continue
+    }
+
     const nextToken = tokens[i + 1]
     if (nextToken === undefined || nextToken.kind !== "IDENT") {
       continue
