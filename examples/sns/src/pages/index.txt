@@ -1,0 +1,17 @@
+---
+input:
+    - isLoggedIn
+---
+| if equal=($isLoggedIn, true) |
+    % HStack %
+        % LeftSideMenuView /%
+        % ContentView /%
+        % RightSideMenuView /%
+    %/ HStack %
+| else /|
+    % HStack %
+        % Spacer /%
+        % LoginView /%
+        $ Spacer /%
+    %/ HStack %
+|/ if |

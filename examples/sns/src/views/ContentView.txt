@@ -1,0 +1,10 @@
+% ZStack %
+    % VStack .align-center %
+        % Popup %
+    %/ VStack %
+
+    % VStack .align-center %
+        < PostingArea />
+        < TimeLine />
+    %/ VStack %
+%/ ZStack %
