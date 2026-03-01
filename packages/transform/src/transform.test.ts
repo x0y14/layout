@@ -20,7 +20,7 @@ test("ロジックタグなし・プレースホルダーなしの AST はその
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -38,7 +38,7 @@ test("ロジックタグなし・プレースホルダーなしの AST はその
 
 test("空の DocumentNode", () => {
   const input: DocumentNode = { type: "document", children: [] }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, { type: "document", children: [] })
 })
 
@@ -62,7 +62,7 @@ test("コンポーネント属性の Placeholder を解決", () => {
       },
     ],
   }
-  const result = transform(input, new Map([["userName", "Alice"]]))
+  const result = transform(input, new Map([["userName", "Alice"]]), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -107,6 +107,7 @@ test("GroupValue 内の Placeholder を解決", () => {
       ["first", 1],
       ["second", 2],
     ]),
+    new Set(),
   )
   assert.deepStrictEqual(result, {
     type: "document",
@@ -142,7 +143,7 @@ test("存在しないプレースホルダーでエラー", () => {
     ],
   }
   assert.throws(
-    () => transform(input, new Map()),
+    () => transform(input, new Map(), new Set()),
     Error,
     /placeholder "missing" is not defined/,
   )
@@ -175,7 +176,7 @@ test("equal 条件が true → 子を展開", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -214,7 +215,7 @@ test("equal 条件が false → 子を除去", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, { type: "document", children: [] })
 })
 
@@ -241,7 +242,7 @@ test("notequal 条件が true", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -280,7 +281,7 @@ test("notequal 条件が false", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, { type: "document", children: [] })
 })
 
@@ -309,7 +310,7 @@ test("include 条件が true", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -350,7 +351,7 @@ test("include 条件が false", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, { type: "document", children: [] })
 })
 
@@ -379,7 +380,7 @@ test("notinclude 条件が true", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -420,7 +421,7 @@ test("notinclude 条件が false", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, { type: "document", children: [] })
 })
 
@@ -452,7 +453,7 @@ test("条件引数に Placeholder を使用", () => {
       },
     ],
   }
-  const resultTrue = transform(input, new Map([["theme", "dark"]]))
+  const resultTrue = transform(input, new Map([["theme", "dark"]]), new Set())
   assert.deepStrictEqual(resultTrue, {
     type: "document",
     children: [
@@ -467,7 +468,7 @@ test("条件引数に Placeholder を使用", () => {
     ],
   })
 
-  const resultFalse = transform(input, new Map([["theme", "light"]]))
+  const resultFalse = transform(input, new Map([["theme", "light"]]), new Set())
   assert.deepStrictEqual(resultFalse, { type: "document", children: [] })
 })
 
@@ -530,7 +531,7 @@ test("if が true → if ブランチ展開", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -601,7 +602,7 @@ test("if false + elif true → elif ブランチ展開", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -672,7 +673,7 @@ test("if false + elif false + else → else ブランチ展開", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -727,7 +728,7 @@ test("全条件 false + else なし → 空", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, { type: "document", children: [] })
 })
 
@@ -775,7 +776,7 @@ test("コンポーネント内のロジックタグ", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -848,7 +849,7 @@ test("if の中にネストした if", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   // 外側の if は true なので子を展開
   // 内側の if は false なので除去
   // Outer はそのまま残る
@@ -888,7 +889,7 @@ test("入力の DocumentNode を変更しない", () => {
     ],
   }
   const inputSnapshot = JSON.stringify(input)
-  transform(input, new Map([["name", "Alice"]]))
+  transform(input, new Map([["name", "Alice"]]), new Set())
   assert.strictEqual(JSON.stringify(input), inputSnapshot)
 })
 
@@ -927,7 +928,7 @@ test("equal でオブジェクト同士の深い比較", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -974,7 +975,7 @@ test("equal でキー順序が異なるオブジェクトも一致", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -1021,7 +1022,7 @@ test("include でオブジェクトを含む配列の検索", () => {
       },
     ],
   }
-  const result = transform(input, new Map())
+  const result = transform(input, new Map(), new Set())
   assert.deepStrictEqual(result, {
     type: "document",
     children: [
@@ -1032,6 +1033,213 @@ test("include でオブジェクトを含む配列の検索", () => {
         attributes: {},
         children: [],
         selfClosing: true,
+      },
+    ],
+  })
+})
+
+// ========================================
+// レイアウトタグ
+// ========================================
+
+test("レイアウトタグはデコレーションを保持してそのまま通過する", () => {
+  const input: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "VStack",
+        decorations: ["align-center"],
+        attributes: {},
+        children: [],
+        selfClosing: true,
+      },
+    ],
+  }
+  const result = transform(input, new Map(), new Set(["VStack"]))
+  assert.deepStrictEqual(result, {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "VStack",
+        decorations: ["align-center"],
+        attributes: {},
+        children: [],
+        selfClosing: true,
+      },
+    ],
+  })
+})
+
+test("レイアウトタグの子要素を再帰的に変換する", () => {
+  const input: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "VStack",
+        decorations: [],
+        attributes: {},
+        children: [
+          {
+            type: "element",
+            name: "if",
+            decorations: [],
+            attributes: { equal: { type: "group", values: ["a", "a"] } },
+            children: [
+              {
+                type: "element",
+                name: "Foo",
+                decorations: [],
+                attributes: {},
+                children: [],
+                selfClosing: true,
+              },
+            ],
+            selfClosing: false,
+          },
+        ],
+        selfClosing: false,
+      },
+    ],
+  }
+  const result = transform(input, new Map(), new Set(["VStack"]))
+  assert.deepStrictEqual(result, {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "VStack",
+        decorations: [],
+        attributes: {},
+        children: [
+          {
+            type: "element",
+            name: "Foo",
+            decorations: [],
+            attributes: {},
+            children: [],
+            selfClosing: true,
+          },
+        ],
+        selfClosing: false,
+      },
+    ],
+  })
+})
+
+test("レイアウトタグ内のコンポーネントのプレースホルダーを解決する", () => {
+  const input: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "VStack",
+        decorations: [],
+        attributes: {},
+        children: [
+          {
+            type: "element",
+            name: "Input",
+            decorations: [],
+            attributes: {
+              value: { type: "placeholder", name: "userName" },
+            },
+            children: [],
+            selfClosing: true,
+          },
+        ],
+        selfClosing: false,
+      },
+    ],
+  }
+  const result = transform(input, new Map([["userName", "Alice"]]), new Set(["VStack"]))
+  assert.deepStrictEqual(result, {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "VStack",
+        decorations: [],
+        attributes: {},
+        children: [
+          {
+            type: "element",
+            name: "Input",
+            decorations: [],
+            attributes: { value: "Alice" },
+            children: [],
+            selfClosing: true,
+          },
+        ],
+        selfClosing: false,
+      },
+    ],
+  })
+})
+
+test("ネストしたレイアウトタグ", () => {
+  const input: DocumentNode = {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "ZStack",
+        decorations: [],
+        attributes: {},
+        children: [
+          {
+            type: "element",
+            name: "VStack",
+            decorations: [],
+            attributes: {},
+            children: [
+              {
+                type: "element",
+                name: "Button",
+                decorations: ["primary"],
+                attributes: { text: "Click" },
+                children: [],
+                selfClosing: true,
+              },
+            ],
+            selfClosing: false,
+          },
+        ],
+        selfClosing: false,
+      },
+    ],
+  }
+  const result = transform(input, new Map(), new Set(["ZStack", "VStack"]))
+  assert.deepStrictEqual(result, {
+    type: "document",
+    children: [
+      {
+        type: "element",
+        name: "ZStack",
+        decorations: [],
+        attributes: {},
+        children: [
+          {
+            type: "element",
+            name: "VStack",
+            decorations: [],
+            attributes: {},
+            children: [
+              {
+                type: "element",
+                name: "Button",
+                decorations: ["primary"],
+                attributes: { text: "Click" },
+                children: [],
+                selfClosing: true,
+              },
+            ],
+            selfClosing: false,
+          },
+        ],
+        selfClosing: false,
       },
     ],
   })

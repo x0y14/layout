@@ -1,6 +1,6 @@
 import { test, assert } from "vitest"
-import type { DocumentNode } from "onlytag"
 import { parse } from "./parse.js"
+import type { ParseResult } from "./parse.js"
 
 // ========================================
 // 正常系
@@ -8,446 +8,494 @@ import { parse } from "./parse.js"
 
 test("単一コンポーネントタグ (self-closing)", () => {
   const result = parse("<Button />")
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "Button",
-        decorations: [],
-        attributes: {},
-        children: [],
-        selfClosing: true,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "Button",
+          decorations: [],
+          attributes: {},
+          children: [],
+          selfClosing: true,
+        },
+      ],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("単一コンポーネントタグ (open-close)", () => {
   const result = parse("<Container></Container>")
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "Container",
-        decorations: [],
-        attributes: {},
-        children: [],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "Container",
+          decorations: [],
+          attributes: {},
+          children: [],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("デコレーション+属性付きコンポーネント", () => {
   const result = parse('<Button.primary text="Click" />')
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "Button",
-        decorations: ["primary"],
-        attributes: { text: "Click" },
-        children: [],
-        selfClosing: true,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "Button",
+          decorations: ["primary"],
+          attributes: { text: "Click" },
+          children: [],
+          selfClosing: true,
+        },
+      ],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("ネストしたコンポーネント", () => {
   const result = parse("<Layout><Header /><Body><Content /></Body></Layout>")
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "Layout",
-        decorations: [],
-        attributes: {},
-        children: [
-          {
-            type: "element",
-            name: "Header",
-            decorations: [],
-            attributes: {},
-            children: [],
-            selfClosing: true,
-          },
-          {
-            type: "element",
-            name: "Body",
-            decorations: [],
-            attributes: {},
-            children: [
-              {
-                type: "element",
-                name: "Content",
-                decorations: [],
-                attributes: {},
-                children: [],
-                selfClosing: true,
-              },
-            ],
-            selfClosing: false,
-          },
-        ],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "Layout",
+          decorations: [],
+          attributes: {},
+          children: [
+            {
+              type: "element",
+              name: "Header",
+              decorations: [],
+              attributes: {},
+              children: [],
+              selfClosing: true,
+            },
+            {
+              type: "element",
+              name: "Body",
+              decorations: [],
+              attributes: {},
+              children: [
+                {
+                  type: "element",
+                  name: "Content",
+                  decorations: [],
+                  attributes: {},
+                  children: [],
+                  selfClosing: true,
+                },
+              ],
+              selfClosing: false,
+            },
+          ],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("ロジックタグ if (open-close)", () => {
   const result = parse('|if equal=("a", "b")|<Foo />|/if|')
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "if",
-        decorations: [],
-        attributes: { equal: { type: "group", values: ["a", "b"] } },
-        children: [
-          {
-            type: "element",
-            name: "Foo",
-            decorations: [],
-            attributes: {},
-            children: [],
-            selfClosing: true,
-          },
-        ],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "if",
+          decorations: [],
+          attributes: { equal: { type: "group", values: ["a", "b"] } },
+          children: [
+            {
+              type: "element",
+              name: "Foo",
+              decorations: [],
+              attributes: {},
+              children: [],
+              selfClosing: true,
+            },
+          ],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("ロジックタグ elif (self-closing)", () => {
   const result = parse('|if equal=("a", "b")|<A />|elif equal=("x", "y") /||/if|')
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "if",
-        decorations: [],
-        attributes: { equal: { type: "group", values: ["a", "b"] } },
-        children: [
-          {
-            type: "element",
-            name: "A",
-            decorations: [],
-            attributes: {},
-            children: [],
-            selfClosing: true,
-          },
-          {
-            type: "element",
-            name: "elif",
-            decorations: [],
-            attributes: { equal: { type: "group", values: ["x", "y"] } },
-            children: [],
-            selfClosing: true,
-          },
-        ],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "if",
+          decorations: [],
+          attributes: { equal: { type: "group", values: ["a", "b"] } },
+          children: [
+            {
+              type: "element",
+              name: "A",
+              decorations: [],
+              attributes: {},
+              children: [],
+              selfClosing: true,
+            },
+            {
+              type: "element",
+              name: "elif",
+              decorations: [],
+              attributes: { equal: { type: "group", values: ["x", "y"] } },
+              children: [],
+              selfClosing: true,
+            },
+          ],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("ロジックタグ else (self-closing)", () => {
   const result = parse('|if equal=("a", "b")|<A />|else /||/if|')
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "if",
-        decorations: [],
-        attributes: { equal: { type: "group", values: ["a", "b"] } },
-        children: [
-          {
-            type: "element",
-            name: "A",
-            decorations: [],
-            attributes: {},
-            children: [],
-            selfClosing: true,
-          },
-          {
-            type: "element",
-            name: "else",
-            decorations: [],
-            attributes: {},
-            children: [],
-            selfClosing: true,
-          },
-        ],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "if",
+          decorations: [],
+          attributes: { equal: { type: "group", values: ["a", "b"] } },
+          children: [
+            {
+              type: "element",
+              name: "A",
+              decorations: [],
+              attributes: {},
+              children: [],
+              selfClosing: true,
+            },
+            {
+              type: "element",
+              name: "else",
+              decorations: [],
+              attributes: {},
+              children: [],
+              selfClosing: true,
+            },
+          ],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("コンポーネント+ロジック混在", () => {
   const result = parse('<Layout>|if equal=("a","b")|<Dark />|else /||/if|<Light /></Layout>')
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "Layout",
-        decorations: [],
-        attributes: {},
-        children: [
-          {
-            type: "element",
-            name: "if",
-            decorations: [],
-            attributes: { equal: { type: "group", values: ["a", "b"] } },
-            children: [
-              {
-                type: "element",
-                name: "Dark",
-                decorations: [],
-                attributes: {},
-                children: [],
-                selfClosing: true,
-              },
-              {
-                type: "element",
-                name: "else",
-                decorations: [],
-                attributes: {},
-                children: [],
-                selfClosing: true,
-              },
-            ],
-            selfClosing: false,
-          },
-          {
-            type: "element",
-            name: "Light",
-            decorations: [],
-            attributes: {},
-            children: [],
-            selfClosing: true,
-          },
-        ],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "Layout",
+          decorations: [],
+          attributes: {},
+          children: [
+            {
+              type: "element",
+              name: "if",
+              decorations: [],
+              attributes: { equal: { type: "group", values: ["a", "b"] } },
+              children: [
+                {
+                  type: "element",
+                  name: "Dark",
+                  decorations: [],
+                  attributes: {},
+                  children: [],
+                  selfClosing: true,
+                },
+                {
+                  type: "element",
+                  name: "else",
+                  decorations: [],
+                  attributes: {},
+                  children: [],
+                  selfClosing: true,
+                },
+              ],
+              selfClosing: false,
+            },
+            {
+              type: "element",
+              name: "Light",
+              decorations: [],
+              attributes: {},
+              children: [],
+              selfClosing: true,
+            },
+          ],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("レイアウトタグ (self-closing)", () => {
   const result = parse("%Button /%")
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "Button",
-        decorations: [],
-        attributes: {},
-        children: [],
-        selfClosing: true,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "Button",
+          decorations: [],
+          attributes: {},
+          children: [],
+          selfClosing: true,
+        },
+      ],
+    },
+    layoutTagNames: new Set(["Button"]),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("レイアウトタグ (open-close)", () => {
   const result = parse("%Container%%/Container%")
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "Container",
-        decorations: [],
-        attributes: {},
-        children: [],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "Container",
+          decorations: [],
+          attributes: {},
+          children: [],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(["Container"]),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("デコレーション付きレイアウトタグ", () => {
   const result = parse("%VStack.align-center%%/VStack%")
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "VStack",
-        decorations: ["align-center"],
-        attributes: {},
-        children: [],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "VStack",
+          decorations: ["align-center"],
+          attributes: {},
+          children: [],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(["VStack"]),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("子要素を持つレイアウトタグ", () => {
   const result = parse("%VStack%<Button />%/VStack%")
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "VStack",
-        decorations: [],
-        attributes: {},
-        children: [
-          {
-            type: "element",
-            name: "Button",
-            decorations: [],
-            attributes: {},
-            children: [],
-            selfClosing: true,
-          },
-        ],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "VStack",
+          decorations: [],
+          attributes: {},
+          children: [
+            {
+              type: "element",
+              name: "Button",
+              decorations: [],
+              attributes: {},
+              children: [],
+              selfClosing: true,
+            },
+          ],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(["VStack"]),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("ネストしたレイアウトタグ", () => {
   const result = parse("%ZStack%%VStack%<Foo />%/VStack%%/ZStack%")
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "ZStack",
-        decorations: [],
-        attributes: {},
-        children: [
-          {
-            type: "element",
-            name: "VStack",
-            decorations: [],
-            attributes: {},
-            children: [
-              {
-                type: "element",
-                name: "Foo",
-                decorations: [],
-                attributes: {},
-                children: [],
-                selfClosing: true,
-              },
-            ],
-            selfClosing: false,
-          },
-        ],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "ZStack",
+          decorations: [],
+          attributes: {},
+          children: [
+            {
+              type: "element",
+              name: "VStack",
+              decorations: [],
+              attributes: {},
+              children: [
+                {
+                  type: "element",
+                  name: "Foo",
+                  decorations: [],
+                  attributes: {},
+                  children: [],
+                  selfClosing: true,
+                },
+              ],
+              selfClosing: false,
+            },
+          ],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(["ZStack", "VStack"]),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("コンポーネント+レイアウト+ロジック混在", () => {
   const result = parse('%VStack%<Header />|if equal=("a","b")|<Dark />|else /||/if|%/VStack%')
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "VStack",
-        decorations: [],
-        attributes: {},
-        children: [
-          {
-            type: "element",
-            name: "Header",
-            decorations: [],
-            attributes: {},
-            children: [],
-            selfClosing: true,
-          },
-          {
-            type: "element",
-            name: "if",
-            decorations: [],
-            attributes: { equal: { type: "group", values: ["a", "b"] } },
-            children: [
-              {
-                type: "element",
-                name: "Dark",
-                decorations: [],
-                attributes: {},
-                children: [],
-                selfClosing: true,
-              },
-              {
-                type: "element",
-                name: "else",
-                decorations: [],
-                attributes: {},
-                children: [],
-                selfClosing: true,
-              },
-            ],
-            selfClosing: false,
-          },
-        ],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "VStack",
+          decorations: [],
+          attributes: {},
+          children: [
+            {
+              type: "element",
+              name: "Header",
+              decorations: [],
+              attributes: {},
+              children: [],
+              selfClosing: true,
+            },
+            {
+              type: "element",
+              name: "if",
+              decorations: [],
+              attributes: { equal: { type: "group", values: ["a", "b"] } },
+              children: [
+                {
+                  type: "element",
+                  name: "Dark",
+                  decorations: [],
+                  attributes: {},
+                  children: [],
+                  selfClosing: true,
+                },
+                {
+                  type: "element",
+                  name: "else",
+                  decorations: [],
+                  attributes: {},
+                  children: [],
+                  selfClosing: true,
+                },
+              ],
+              selfClosing: false,
+            },
+          ],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(["VStack"]),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("空文字列", () => {
   const result = parse("")
-  const expected: DocumentNode = {
-    type: "document",
-    children: [],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("placeholder/group 付きコンポーネント", () => {
   const result = parse("<Input value=$name items=(1, 2, 3) />")
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "Input",
-        decorations: [],
-        attributes: {
-          value: { type: "placeholder", name: "name" },
-          items: { type: "group", values: [1, 2, 3] },
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "Input",
+          decorations: [],
+          attributes: {
+            value: { type: "placeholder", name: "name" },
+            items: { type: "group", values: [1, 2, 3] },
+          },
+          children: [],
+          selfClosing: true,
         },
-        children: [],
-        selfClosing: true,
-      },
-    ],
+      ],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })
@@ -602,54 +650,60 @@ test("条件の値の要素数が 2 でない", () => {
 
 test("include で第二引数が配列", () => {
   const result = parse('|if include=("a", ["a", "b", "c"])|<Foo />|/if|')
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "if",
-        decorations: [],
-        attributes: { include: { type: "group", values: ["a", ["a", "b", "c"]] } },
-        children: [
-          {
-            type: "element",
-            name: "Foo",
-            decorations: [],
-            attributes: {},
-            children: [],
-            selfClosing: true,
-          },
-        ],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "if",
+          decorations: [],
+          attributes: { include: { type: "group", values: ["a", ["a", "b", "c"]] } },
+          children: [
+            {
+              type: "element",
+              name: "Foo",
+              decorations: [],
+              attributes: {},
+              children: [],
+              selfClosing: true,
+            },
+          ],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })
 
 test("notinclude で第二引数が配列", () => {
   const result = parse('|if notinclude=("x", ["a", "b"])|<Foo />|/if|')
-  const expected: DocumentNode = {
-    type: "document",
-    children: [
-      {
-        type: "element",
-        name: "if",
-        decorations: [],
-        attributes: { notinclude: { type: "group", values: ["x", ["a", "b"]] } },
-        children: [
-          {
-            type: "element",
-            name: "Foo",
-            decorations: [],
-            attributes: {},
-            children: [],
-            selfClosing: true,
-          },
-        ],
-        selfClosing: false,
-      },
-    ],
+  const expected: ParseResult = {
+    document: {
+      type: "document",
+      children: [
+        {
+          type: "element",
+          name: "if",
+          decorations: [],
+          attributes: { notinclude: { type: "group", values: ["x", ["a", "b"]] } },
+          children: [
+            {
+              type: "element",
+              name: "Foo",
+              decorations: [],
+              attributes: {},
+              children: [],
+              selfClosing: true,
+            },
+          ],
+          selfClosing: false,
+        },
+      ],
+    },
+    layoutTagNames: new Set(),
   }
   assert.deepStrictEqual(result, expected)
 })

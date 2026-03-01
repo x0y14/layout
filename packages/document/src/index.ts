@@ -6,6 +6,8 @@ export {
   LOGIC_TAG_NAMES,
 } from "./parse.js"
 
+export type { ParseResult } from "./parse.js"
+
 export type {
   DocumentNode,
   ElementNode,

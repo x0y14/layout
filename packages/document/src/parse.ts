@@ -237,15 +237,21 @@ function validateLayoutTagConstraints(node: ElementNode, layoutTagNames: Set<str
   }
 }
 
+/** Result of parsing a document string */
+export interface ParseResult {
+  document: DocumentNode
+  layoutTagNames: Set<string>
+}
+
 /**
  * Parse a document string into a DocumentNode AST with validation.
  * Uses onlytag for parsing with fixed configuration, then applies
  * domain-specific validation rules for logic tags, layout tags, and component tags.
  * @param input - The document markup string to parse
- * @returns The parsed and validated DocumentNode AST
+ * @returns The parsed and validated ParseResult containing the AST and layout tag names
  * @throws {Error} If the input violates delimiter, logic tag, or layout tag constraints
  */
-export function parse(input: string): DocumentNode {
+export function parse(input: string): ParseResult {
   const tokens = parser.tokenize(input)
 
   // トークン段階でデリミタとタグ名の対応を検証
@@ -265,5 +271,5 @@ export function parse(input: string): DocumentNode {
     }
   }
 
-  return document
+  return { document, layoutTagNames }
 }

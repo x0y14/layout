@@ -193,11 +193,13 @@ function splitAndSelectBranch(
  * Recursively transform children, evaluating logic tags and resolving placeholders.
  * @param children - Array of element nodes to transform
  * @param placeholders - Map of placeholder names to values
+ * @param layoutTagNames - Set of tag names that are layout tags
  * @returns Transformed array of element nodes
  */
 function transformChildren(
   children: ElementNode[],
   placeholders: Map<string, JsonValue>,
+  layoutTagNames: Set<string>,
 ): ElementNode[] {
   const result: ElementNode[] = []
 
@@ -205,9 +207,19 @@ function transformChildren(
     if (child.name === "if") {
       // ブランチを分割して選択し、選択されたブランチの子を再帰的に変換
       const selectedChildren = splitAndSelectBranch(child, placeholders)
-      result.push(...transformChildren(selectedChildren, placeholders))
+      result.push(...transformChildren(selectedChildren, placeholders, layoutTagNames))
+    } else if (layoutTagNames.has(child.name)) {
+      // レイアウトタグ: 属性解決なし、デコレーションと子を保持
+      result.push({
+        type: "element",
+        name: child.name,
+        decorations: [...child.decorations],
+        attributes: {},
+        children: transformChildren(child.children, placeholders, layoutTagNames),
+        selfClosing: child.selfClosing,
+      })
     } else {
-      // コンポーネントノード: 属性を解決し、子を再帰的に変換
+      // コンポーネントタグ: 属性を解決し、子を再帰的に変換
       const resolvedAttributes: Record<string, AttributeValue> = {}
       for (const [key, value] of Object.entries(child.attributes)) {
         resolvedAttributes[key] = resolveAttributeValue(value, placeholders)
@@ -218,7 +230,7 @@ function transformChildren(
         name: child.name,
         decorations: [...child.decorations],
         attributes: resolvedAttributes,
-        children: transformChildren(child.children, placeholders),
+        children: transformChildren(child.children, placeholders, layoutTagNames),
         selfClosing: child.selfClosing,
       })
     }
@@ -230,18 +242,21 @@ function transformChildren(
 /**
  * Transform a DocumentNode by evaluating logic tags and resolving placeholders.
  * Logic tags (if/elif/else) are evaluated based on their conditions and the
- * matching branch's children replace the logic tag. Placeholders in component
- * attributes are resolved from the provided map.
+ * matching branch's children replace the logic tag. Layout tags pass through
+ * without attribute resolution. Placeholders in component attributes are
+ * resolved from the provided map.
  * @param document - The input DocumentNode AST
  * @param placeholders - Map of placeholder names to JSON values
+ * @param layoutTagNames - Set of tag names that are layout tags
  * @returns A new DocumentNode with logic tags evaluated and placeholders resolved
  */
 export function transform(
   document: DocumentNode,
   placeholders: Map<string, JsonValue>,
+  layoutTagNames: Set<string>,
 ): DocumentNode {
   return {
     type: "document",
-    children: transformChildren(document.children, placeholders),
+    children: transformChildren(document.children, placeholders, layoutTagNames),
   }
 }
