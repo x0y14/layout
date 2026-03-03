@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@layout/document": "workspace:*",
+    "@layout/render": "workspace:*",
     "@layout/transform": "workspace:*",
     "hono": "^4.12.3",
     "lit": "^3.3.2",
