@@ -1,7 +1,8 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
 import type { DocumentNode } from '@layout/document'
-import { renderDocument } from '../src/layout/render.js'
+import { renderDocument } from '@layout/render'
+import { components } from '../src/layout/render.js'
 
 test('レイアウトタグが div class="TagName" に変換される', () => {
   const document: DocumentNode = {
@@ -18,8 +19,8 @@ test('レイアウトタグが div class="TagName" に変換される', () => {
     ],
   }
   const layoutTagNames = new Set(['VStack'])
-  const html = renderDocument(document, layoutTagNames)
-  assert.equal(html, '<div class="VStack"></div>')
+  const result = renderDocument(document, layoutTagNames, { components })
+  assert.equal(result.html, '<div class="VStack"></div>')
 })
 
 test('レイアウトタグのデコレーションが class に含まれる', () => {
@@ -37,8 +38,8 @@ test('レイアウトタグのデコレーションが class に含まれる', (
     ],
   }
   const layoutTagNames = new Set(['VStack'])
-  const html = renderDocument(document, layoutTagNames)
-  assert.equal(html, '<div class="VStack align-center"></div>')
+  const result = renderDocument(document, layoutTagNames, { components })
+  assert.equal(result.html, '<div class="VStack align-center"></div>')
 })
 
 test('コンポーネントタグがカスタム要素に変換される', () => {
@@ -56,8 +57,8 @@ test('コンポーネントタグがカスタム要素に変換される', () =>
     ],
   }
   const layoutTagNames = new Set<string>()
-  const html = renderDocument(document, layoutTagNames)
-  assert.equal(html, '<app-logo></app-logo>')
+  const result = renderDocument(document, layoutTagNames, { components })
+  assert.equal(result.html, '<app-logo></app-logo>')
 })
 
 test('属性付きコンポーネントが変換される', () => {
@@ -75,8 +76,8 @@ test('属性付きコンポーネントが変換される', () => {
     ],
   }
   const layoutTagNames = new Set<string>()
-  const html = renderDocument(document, layoutTagNames)
-  assert.equal(html, '<x-menu kind="home"></x-menu>')
+  const result = renderDocument(document, layoutTagNames, { components })
+  assert.equal(result.html, '<x-menu kind="home"></x-menu>')
 })
 
 test('未知のコンポーネント名でエラーになる', () => {
@@ -94,7 +95,7 @@ test('未知のコンポーネント名でエラーになる', () => {
     ],
   }
   const layoutTagNames = new Set<string>()
-  assert.throws(() => renderDocument(document, layoutTagNames), {
+  assert.throws(() => renderDocument(document, layoutTagNames, { components }), {
     message: 'unknown component name: "Unknown"',
   })
 })
@@ -131,9 +132,9 @@ test('ネストしたレイアウトタグとコンポーネントが変換さ�
     ],
   }
   const layoutTagNames = new Set(['VStack'])
-  const html = renderDocument(document, layoutTagNames)
+  const result = renderDocument(document, layoutTagNames, { components })
   assert.equal(
-    html,
+    result.html,
     '<div class="VStack align-center"><app-logo></app-logo><x-menu kind="home"></x-menu></div>'
   )
 })
@@ -153,6 +154,6 @@ test('self-closing レイアウトタグが変換される', () => {
     ],
   }
   const layoutTagNames = new Set(['Spacer'])
-  const html = renderDocument(document, layoutTagNames)
-  assert.equal(html, '<div class="Spacer"></div>')
+  const result = renderDocument(document, layoutTagNames, { components })
+  assert.equal(result.html, '<div class="Spacer"></div>')
 })
