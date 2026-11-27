@@ -13,7 +13,7 @@
   "dependencies": {
     "@layout/document": "workspace:*",
     "@layout/transform": "workspace:*",
-    "hono": "^4.12.3",
+    "hono": "^4.13.23",
     "lit": "^3.3.2",
     "nanostores": "^0.11.3",
     "playful-avatars": "^1.0.0"
