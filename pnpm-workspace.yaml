@@ -4,3 +4,6 @@ packages:
 
 ignoredBuiltDependencies:
   - esbuild
+
+overrides:
+  "oxfmt@0.35.0>tinypool": 2.1.2
